@@ -455,16 +455,13 @@ if (!empty($visit['rating'])) {
         echo '</div>';
     }
 
-
-
     // ========== ایجاد پرونده ==========
-    add_action('admin_post_mr_create_record', 'mr_handle_create_record');
     function mr_handle_create_record() {
         if (!current_user_can('manage_options')) {
-            wp_die('مجاز نیستید.');
+            wp_die(__('You are not allowed.', 'medical-records'));
         }
 
-        $user_id = intval($_GET['user_id']);
+        $user_id = intval($_GET['user_id'] ?? 0);
         if ($user_id > 0) {
             $empty_record = [
                 'illnesses'    => '',
@@ -478,14 +475,14 @@ if (!empty($visit['rating'])) {
         wp_redirect(admin_url('admin.php?page=medical-records'));
         exit;
     }
- // ========== حذف پرونده ==========
-    add_action('admin_post_mr_delete_record', 'mr_handle_delete_record');
+
+    // ========== حذف پرونده ==========
     function mr_handle_delete_record() {
         if (!current_user_can('manage_options')) {
-            wp_die('مجاز نیستید.');
+            wp_die(__('You are not allowed.', 'medical-records'));
         }
 
-        $user_id = intval($_GET['user_id']);
+        $user_id = intval($_GET['user_id'] ?? 0);
         if ($user_id > 0) {
             delete_user_meta($user_id, 'medical_record_data');
             delete_user_meta($user_id, 'medical_visits');
@@ -494,19 +491,14 @@ if (!empty($visit['rating'])) {
         wp_redirect(admin_url('admin.php?page=medical-records'));
         exit;
     }
-// ========== Delete Record Handler ==========
-add_action('admin_post_mr_delete_record', 'mr_handle_delete_record');
-function mr_handle_delete_record() {
-    if (!current_user_can('manage_options')) {
-        wp_die(__('You are not allowed.', 'medical-records'));
-    }
+}
 
-    $user_id = intval($_GET['user_id']);
-    if ($user_id > 0) {
-        delete_user_meta($user_id, 'medical_record_data');
-        delete_user_meta($user_id, 'medical_visits');
-    }
+// Initialize admin actions (outside class)
+add_action('admin_init', 'mr_admin_init_actions');
 
-    wp_redirect(admin_url('admin.php?page=medical-records'));
-    exit;
+if (!function_exists('mr_admin_init_actions')) {
+    function mr_admin_init_actions() {
+        add_action('admin_post_mr_create_record', 'mr_handle_create_record');
+        add_action('admin_post_mr_delete_record', 'mr_handle_delete_record');
+    }
 }
