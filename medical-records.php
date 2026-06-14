@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Medical Records
- * Description: مدیریت پرونده‌های پزشکی کاربران
- * Version: 1.0
+ * Description: مدیریت پرونده‌های پزشکی کاربران - یکپارچه با بوکلی
+ * Version: 2.0
  * Author: محمدامین سعدی کیا
  * Text Domain: medical-records
  * Domain Path: /languages
@@ -18,22 +18,10 @@ if (!defined('ABSPATH')) {
 
 define('MR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MR_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('MR_PLUGIN_VERSION', '1.0');
-// URL of your plugin host JSON endpoint that returns update info
-// Example JSON structure expected:
-// {
-//   "name": "Medical Records",
-//   "version": "1.1.1",
-//   "package": "https://plugins.example.com/medical-records/medical-records-1.1.1.zip",
-//   "url": "https://plugins.example.com/medical-records/",
-//   "sections": { "description": "..." }
-// }
-define('MR_UPDATE_API', 'https://your-plugin-host.example.com/updates/medical-records.json');
+define('MR_PLUGIN_VERSION', '2.0');
 
-// شروع session برای نوبت‌گیری
-if (!session_id()) {
-    session_start();
-}
+// URL of your plugin host JSON endpoint that returns update info
+define('MR_UPDATE_API', 'https://your-plugin-host.example.com/updates/medical-records.json');
 
 require_once(ABSPATH . 'wp-admin/includes/file.php');
 require_once(ABSPATH . 'wp-admin/includes/media.php');
@@ -61,7 +49,7 @@ function mr_enqueue_assets() {
         'ajax_url' => admin_url('admin-ajax.php'),
         'booking_nonce' => wp_create_nonce('mr_booking_nonce'),
         'mr_plugin_url' => MR_PLUGIN_URL,
-    ]);
+    ]);\
 }
 
 // Activation hook
@@ -82,72 +70,17 @@ require_once MR_PLUGIN_DIR . 'includes/roles/class-admin.php';
 require_once MR_PLUGIN_DIR . 'includes/roles/class-doctor.php';
 require_once MR_PLUGIN_DIR . 'includes/roles/class-patient.php';
 
-// کمکی
+// کمکی - شامل توابع Bookly
 require_once MR_PLUGIN_DIR . 'includes/helpers/functions-display.php';
+require_once MR_PLUGIN_DIR . 'includes/helpers/functions-bookly.php';
 
-// نوبت‌گیری
-require_once MR_PLUGIN_DIR . 'includes/booking/class-booking.php';
-require_once MR_PLUGIN_DIR . 'includes/booking/shortcode-booking.php';
-require_once MR_PLUGIN_DIR . 'includes/booking/doctor-settings.php';
+// نوبت‌گیری (غیرفعال شده - سیستم رزرو حذف شد)
+// require_once MR_PLUGIN_DIR . 'includes/booking/class-booking.php';
+// require_once MR_PLUGIN_DIR . 'includes/booking/shortcode-booking.php';
+// require_once MR_PLUGIN_DIR . 'includes/booking/doctor-settings.php';
 
-// ========== هندلرهای AJAX ==========
-add_action('wp_ajax_mr_save_rating', 'mr_save_rating_handler');
-add_action('wp_ajax_nopriv_mr_save_rating', 'mr_save_rating_handler');
-
-function mr_save_rating_handler() {
-    if (!is_user_logged_in() || !in_array('subscriber', wp_get_current_user()->roles)) {
-        wp_send_json_error();
-    }
-    if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'mr_rating_action')) {
-        wp_send_json_error();
-    }
-
-    $user_id = intval($_POST['user_id'] ?? 0);
-    $visit_id = sanitize_text_field($_POST['visit_id'] ?? '');
-    $rating = intval($_POST['rating'] ?? 0);
-
-    if ($user_id <= 0 || empty($visit_id) || $rating < 1 || $rating > 5 || $user_id !== get_current_user_id()) {
-        wp_send_json_error();
-    }
-
-    $visits = get_user_meta($user_id, 'medical_visits', true);
-    if (!is_array($visits)) {
-        wp_send_json_error();
-    }
-
-    $found_index = null;
-    foreach ($visits as $index => $visit) {
-        if (isset($visit['id']) && $visit['id'] === $visit_id) {
-            $found_index = $index;
-            break;
-        }
-    }
-
-    if ($found_index === null) {
-        wp_send_json_error();
-    }
-
-    if (!empty($visits[$found_index]['rating'])) {
-        wp_send_json_error();
-    }
-
-    $visits[$found_index]['rating'] = $rating;
-    update_user_meta($user_id, 'medical_visits', $visits);
-
-    wp_send_json_success();
-}
-
-add_action('wp_ajax_mr_get_rating_nonce', 'mr_get_rating_nonce_handler');
-add_action('wp_ajax_nopriv_mr_get_rating_nonce', 'mr_get_rating_nonce_handler');
-
-function mr_get_rating_nonce_handler() {
-    if (!is_user_logged_in() || !in_array('subscriber', wp_get_current_user()->roles)) {
-        wp_send_json_error();
-    }
-    wp_send_json_success([
-        'nonce' => wp_create_nonce('mr_rating_action')
-    ]);
-}
+// ========== هندلرهای AJAX (غیرفعال شده - سیستم امتیازدهی حذف شد) ==========
+// Rating system has been removed as per requirements
 
 // -------------------- Remote update checker --------------------
 add_filter('pre_set_site_transient_update_plugins', 'mr_check_for_update');
@@ -184,7 +117,7 @@ function mr_check_for_update($transient) {
         return $transient;
     }
 
-    $plugin_file = plugin_basename(__FILE__); // e.g. medical-records/medical-records.php
+    $plugin_file = plugin_basename(__FILE__);
     $remote = mr_get_remote_plugin_info();
     if (!$remote || empty($remote->version)) {
         return $transient;
