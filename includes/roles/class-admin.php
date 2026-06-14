@@ -252,7 +252,8 @@ if (!empty($visit['rating'])) {
         $patient = get_user_by('ID', $patient_id);
         if (!$patient) wp_die('بیمار یافت نشد.');
 
-        $doctors = get_users(['role__in' => ['editor', 'administrator'], 'orderby' => 'display_name']);
+        // انتخاب پزشک از جدول Bookly
+        $doctors = mr_get_bookly_doctors();
 
         if (isset($_POST['mr_save_visit']) && wp_verify_nonce($_POST['mr_visit_nonce'], 'mr_save_visit_action')) {
             $doctor_id = intval($_POST['doctor_id'] ?? 0);
@@ -281,9 +282,7 @@ if (!empty($visit['rating'])) {
                     'complaint'   => $complaint,
                     'diagnosis'   => $diagnosis,
                     'medications' => $medications,
-                    'files'       => $files,
-					'rating'      => 0
-
+                    'files'       => $files
                 ];
 
                 $visits = get_user_meta($patient_id, 'medical_visits', true);
@@ -306,7 +305,9 @@ if (!empty($visit['rating'])) {
         echo '<tr><th style="padding: 10px 0 !important; width: 25% !important; text-align: left !important;">پزشک <span style="color:red !important;">*</span></th><td style="padding: 10px 0 !important;"><select name="doctor_id" class="regular-text" required style="width: 100% !important; max-width: 300px !important; padding: 10px !important; border: 1px solid #ddd !important; border-radius: 6px !important;">';
         echo '<option value="">انتخاب کنید...</option>';
         foreach ($doctors as $doc) {
-            echo '<option value="' . esc_attr($doc->ID) . '">' . esc_html($doc->display_name) . ' (' . esc_html($doc->user_login) . ')</option>';
+            $color = mr_get_doctor_color($doc);
+            $name = mr_format_doctor_name($doc);
+            echo '<option value="' . esc_attr($doc['id']) . '" data-color="' . esc_attr($color) . '">' . esc_html($name) . '</option>';
         }
         echo '</select></td></tr>';
 

@@ -1,43 +1,64 @@
 <?php
+/**
+ * Display helper functions for Medical Records plugin
+ * 
+ * @package Medical_Records
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Get medical info summary HTML
+ * 
+ * @param int $user_id
+ * @return string HTML output
+ */
 function mr_get_medical_info($user_id) {
-    $record = get_user_meta($user_id, 'medical_record_data_v2', true);
-    $diseases = [
-        'diabetes' => 'دیابت',
-        'hypertension' => 'فشار خون بالا',
-        'asthma' => 'آسم',
-        'heart_disease' => 'بیماری قلبی',
-        'thyroid' => 'بیماری تیروئید',
-        'allergy' => 'حساسیت‌های شدید'
-    ];
-
-    $html = '<div style="background: #f8fafc !important; border-left: 4px solid #396cf0 !important; padding: 20px !important; border-radius: 0 8px 8px 0 !important; margin: 20px 0 !important;">';
-    $html .= '<h3 style="margin-top: 0 !important; color: #333 !important;">اطلاعات پزشکی</h3>';
+    $record = get_user_meta($user_id, 'medical_record_data', true);
+    $visits = get_user_meta($user_id, 'medical_visits', true);
+    $visits = is_array($visits) ? $visits : [];
     
-    $user = get_user_by('ID', $user_id);
-    $html .= '<p><strong>نام بیمار:</strong> ' . esc_html($user->display_name) . '</p>';
-    $html .= '<p><strong>سن:</strong> ' . (isset($record['age']) ? esc_html($record['age']) : '—') . '</p>';
-    $html .= '<p><strong>گروه خونی:</strong> ' . (isset($record['blood_group']) ? esc_html($record['blood_group']) : '—') . '</p>';
-
-    $selected_diseases = isset($record['medical_history']) ? $record['medical_history'] : [];
-    if (!empty($selected_diseases)) {
-        $names = [];
-        foreach ($selected_diseases as $d) {
-            if (isset($diseases[$d])) $names[] = $diseases[$d];
-        }
-        $html .= '<p><strong>سابقهٔ بیماری‌ها:</strong> ' . implode('، ', $names) . '</p>';
-    } else {
-        $html .= '<p><strong>سابقهٔ بیماری‌ها:</strong> —</p>';
+    // محاسبه آخرین ویزیت
+    $last_visit_date = '—';
+    if (!empty($visits)) {
+        usort($visits, function($a, $b) {
+            return strcmp($b['visit_date'] ?? '', $a['visit_date'] ?? '');
+        });
+        $last_visit_date = $visits[0]['visit_date'] ?? '—';
     }
-
-    // فایل‌ها
-    if (!empty($record['files'])) {
-        $html .= '<p><strong>فایل‌های پزشکی:</strong><br/>';
-        foreach ($record['files'] as $file) {
-            $html .= '• <a href="' . esc_url($file['url']) . '" target="_blank" style="color: #396cf0 !important; text-decoration: underline !important;">' . esc_html($file['title']) . '</a><br/>';
-        }
-        $html .= '</p>';
-    }
-
-    $html .= '</div>';
-    return $html;
+    
+    $illnesses = !empty($record['illnesses']) ? $record['illnesses'] : '—';
+    $medications = !empty($record['medications']) ? $record['medications'] : '—';
+    $notes = !empty($record['notes']) ? $record['notes'] : '—';
+    
+    $output = '<div class="mr-medical-summary">';
+    $output .= '<h3 style="color: #396cf0 !important; margin-top: 0 !important; margin-bottom: 20px !important; font-size: 18px !important;">📋 خلاصه پرونده پزشکی</h3>';
+    $output .= '<div class="mr-medical-summary-grid">';
+    
+    $output .= '<div class="mr-medical-item">';
+    $output .= '<div class="mr-medical-label">آخرین ویزیت</div>';
+    $output .= '<div class="mr-medical-value">' . esc_html($last_visit_date) . '</div>';
+    $output .= '</div>';
+    
+    $output .= '<div class="mr-medical-item">';
+    $output .= '<div class="mr-medical-label">سابقه بیماری‌ها</div>';
+    $output .= '<div class="mr-medical-value">' . esc_html($illnesses) . '</div>';
+    $output .= '</div>';
+    
+    $output .= '<div class="mr-medical-item">';
+    $output .= '<div class="mr-medical-label">داروهای مصرفی</div>';
+    $output .= '<div class="mr-medical-value">' . esc_html($medications) . '</div>';
+    $output .= '</div>';
+    
+    $output .= '<div class="mr-medical-item">';
+    $output .= '<div class="mr-medical-label">یادداشت پزشک</div>';
+    $output .= '<div class="mr-medical-value">' . esc_html($notes) . '</div>';
+    $output .= '</div>';
+    
+    $output .= '</div></div>';
+    
+    return $output;
 }
