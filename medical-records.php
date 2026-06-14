@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Medical Records
- * Description: مدیریت پرونده‌های پزشکی کاربران - یکپارچه با بوکلی
- * Version: 2.0
+ * Plugin Name: Medical Records (Bookly Integration)
+ * Description: مدیریت پرونده‌های پزشکی کاربران - یکپارچه با بوکلی - بدون سیستم رزرو
+ * Version: 3.0.0
  * Author: محمدامین سعدی کیا
  * Text Domain: medical-records
  * Domain Path: /languages
- * Requires at least: 5.0
- * Requires PHP: 7.2
+ * Requires at least: 5.8
+ * Requires PHP: 7.4
  * License: GPL v2 or later
  */
 
@@ -16,161 +16,162 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MR_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('MR_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('MR_PLUGIN_VERSION', '2.0');
+// Define Constants safely with checks
+if (!defined('MR_PLUGIN_DIR')) {
+    define('MR_PLUGIN_DIR', plugin_dir_path(__FILE__));
+}
+if (!defined('MR_PLUGIN_URL')) {
+    define('MR_PLUGIN_URL', plugin_dir_url(__FILE__));
+}
+if (!defined('MR_PLUGIN_VERSION')) {
+    define('MR_PLUGIN_VERSION', '3.0.0');
+}
+if (!defined('MR_PLUGIN_BASENAME')) {
+    define('MR_PLUGIN_BASENAME', plugin_basename(__FILE__));
+}
 
 // URL of your plugin host JSON endpoint that returns update info
-define('MR_UPDATE_API', 'https://your-plugin-host.example.com/updates/medical-records.json');
+if (!defined('MR_UPDATE_API')) {
+    define('MR_UPDATE_API', 'https://your-plugin-host.example.com/updates/medical-records.json');
+}
 
+// ========== بارگذاری فایل‌های ضروری وردپرس ==========
 require_once(ABSPATH . 'wp-admin/includes/file.php');
 require_once(ABSPATH . 'wp-admin/includes/media.php');
 
-// ========== بارگذاری CSS و JavaScript ==========
-add_action('wp_enqueue_scripts', 'mr_enqueue_assets');
-add_action('admin_enqueue_scripts', 'mr_enqueue_admin_assets');
+/**
+ * Main Plugin Class
+ */
+final class Medical_Records_Plugin {
 
-function mr_enqueue_assets() {
-    // Core styles
-    wp_enqueue_style('mr-booking-css', MR_PLUGIN_URL . 'assets/css/booking.css', [], MR_PLUGIN_VERSION);
-    wp_enqueue_style('mr-frontend-css', MR_PLUGIN_URL . 'assets/css/frontend.css', [], MR_PLUGIN_VERSION);
+    private static $instance = null;
 
-    // External libraries (Persian/Jalali datepicker and animations) via CDN
-    wp_enqueue_style('mr-persian-datepicker-css', 'https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css', [], null);
-    wp_enqueue_style('mr-animate-css', 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css', [], null);
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
 
-    // Scripts
-    wp_enqueue_script('jquery');
-    wp_enqueue_script('mr-persian-date', 'https://cdn.jsdelivr.net/npm/persian-date@1.0.6/dist/persian-date.min.js', ['jquery'], null, true);
-    wp_enqueue_script('mr-persian-datepicker', 'https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js', ['mr-persian-date', 'jquery'], null, true);
-    wp_enqueue_script('mr-booking-js', MR_PLUGIN_URL . 'assets/js/booking.js', ['jquery', 'mr-persian-datepicker'], MR_PLUGIN_VERSION, true);
+    private function __construct() {
+        $this->init_hooks();
+    }
 
-    // Pass ajax URL and nonces to frontend script
-    wp_localize_script('mr-booking-js', 'mr_ajax', [
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'booking_nonce' => wp_create_nonce('mr_booking_nonce'),
-        'mr_plugin_url' => MR_PLUGIN_URL,
-    ]);
+    private function init_hooks() {
+        register_activation_hook(__FILE__, array($this, 'activate'));
+        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        
+        add_action('plugins_loaded', array($this, 'load_textdomain'), 1);
+        add_action('init', array($this, 'load_dependencies'), 1);
+        add_action('admin_init', array($this, 'check_database'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+    }
+
+    public function activate() {
+        $this->create_tables();
+        $this->load_dependencies();
+        flush_rewrite_rules();
+    }
+
+    public function deactivate() {
+        flush_rewrite_rules();
+    }
+
+    public function load_textdomain() {
+        load_plugin_textdomain('medical-records', false, dirname(MR_PLUGIN_BASENAME) . '/languages');
+    }
+
+    public function load_dependencies() {
+        // Helpers - Load first
+        if (file_exists(MR_PLUGIN_DIR . 'includes/helpers/functions-bookly.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/helpers/functions-bookly.php';
+        }
+        if (file_exists(MR_PLUGIN_DIR . 'includes/helpers/functions-display.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/helpers/functions-display.php';
+        }
+        
+        // Core
+        if (file_exists(MR_PLUGIN_DIR . 'includes/core/admin-menu.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/core/admin-menu.php';
+        }
+        
+        // Roles - Check existence before requiring
+        if (file_exists(MR_PLUGIN_DIR . 'includes/roles/class-admin.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/roles/class-admin.php';
+        }
+        if (file_exists(MR_PLUGIN_DIR . 'includes/roles/class-doctor.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/roles/class-doctor.php';
+        }
+        if (file_exists(MR_PLUGIN_DIR . 'includes/roles/class-patient.php')) {
+            require_once MR_PLUGIN_DIR . 'includes/roles/class-patient.php';
+        }
+    }
+
+    public function check_database() {
+        // Check if tables exist, if not create them (safety net)
+        global $wpdb;
+        $table_visits = $wpdb->prefix . 'mr_visits';
+        
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_visits'") != $table_visits) {
+            $this->create_tables();
+        }
+    }
+
+    private function create_tables() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $table_visits = $wpdb->prefix . 'mr_visits';
+        $table_files = $wpdb->prefix . 'mr_files';
+
+        $sql_visits = "CREATE TABLE $table_visits (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            patient_id bigint(20) NOT NULL,
+            doctor_id bigint(20) NOT NULL,
+            visit_date datetime NOT NULL,
+            chief_complaint text NOT NULL,
+            history_of_present_illness text,
+            past_medical_history text,
+            medications text,
+            allergies text,
+            physical_exam text,
+            diagnosis text,
+            treatment_plan text,
+            follow_up_date datetime DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY patient_id (patient_id),
+            KEY doctor_id (doctor_id)
+        ) $charset_collate;";
+
+        $sql_files = "CREATE TABLE $table_files (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            visit_id bigint(20) NOT NULL,
+            file_url varchar(255) NOT NULL,
+            file_type varchar(50) NOT NULL,
+            uploaded_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY visit_id (visit_id)
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql_visits);
+        dbDelta($sql_files);
+    }
+
+    public function enqueue_admin_assets($hook) {
+        // Only load on our plugin pages
+        if (strpos($hook, 'medical-records') === false && strpos($hook, 'mr-') === false && strpos($hook, 'toplevel_page_medical-records') === false) {
+            return;
+        }
+        
+        wp_enqueue_style('mr-admin-css', MR_PLUGIN_URL . 'assets/css/admin.css', [], MR_PLUGIN_VERSION);
+    }
 }
 
-function mr_enqueue_admin_assets($hook) {
-    // Only load on our plugin pages
-    if (strpos($hook, 'medical-records') === false && strpos($hook, 'mr-') === false) {
-        return;
-    }
-    
-    wp_enqueue_style('mr-admin-css', MR_PLUGIN_URL . 'assets/css/admin.css', [], MR_PLUGIN_VERSION);
+// Initialize the plugin
+function mr_init_plugin() {
+    return Medical_Records_Plugin::get_instance();
 }
-
-// Activation hook
-register_activation_hook(__FILE__, 'mr_plugin_activate');
-
-function mr_plugin_activate() {
-    // تنظیمات activation
-    if (!wp_next_scheduled('mr_daily_cleanup')) {
-        wp_schedule_event(time(), 'daily', 'mr_daily_cleanup');
-    }
-}
-
-// منوی ادمین
-require_once MR_PLUGIN_DIR . 'includes/core/admin-menu.php';
-
-// نقش‌ها
-require_once MR_PLUGIN_DIR . 'includes/roles/class-admin.php';
-require_once MR_PLUGIN_DIR . 'includes/roles/class-doctor.php';
-require_once MR_PLUGIN_DIR . 'includes/roles/class-patient.php';
-
-// کمکی - شامل توابع Bookly
-require_once MR_PLUGIN_DIR . 'includes/helpers/functions-display.php';
-require_once MR_PLUGIN_DIR . 'includes/helpers/functions-bookly.php';
-
-// نوبت‌گیری (غیرفعال شده - سیستم رزرو حذف شد)
-// require_once MR_PLUGIN_DIR . 'includes/booking/class-booking.php';
-// require_once MR_PLUGIN_DIR . 'includes/booking/shortcode-booking.php';
-// require_once MR_PLUGIN_DIR . 'includes/booking/doctor-settings.php';
-
-// ========== هندلرهای AJAX (غیرفعال شده - سیستم امتیازدهی حذف شد) ==========
-// Rating system has been removed as per requirements
-
-// -------------------- Remote update checker --------------------
-add_filter('pre_set_site_transient_update_plugins', 'mr_check_for_update');
-add_filter('plugins_api', 'mr_plugins_api_handler', 10, 3);
-
-function mr_get_remote_plugin_info() {
-    $cache_key = 'mr_update_info';
-    $cached = get_transient($cache_key);
-    if ($cached !== false) {
-        return $cached;
-    }
-
-    $response = wp_remote_get(MR_UPDATE_API, ['timeout' => 10]);
-    if (is_wp_error($response)) {
-        return false;
-    }
-    $code = wp_remote_retrieve_response_code($response);
-    if ($code !== 200) {
-        return false;
-    }
-    $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body);
-    if (!$data || !isset($data->version)) {
-        return false;
-    }
-
-    // cache for 12 hours
-    set_transient($cache_key, $data, 12 * HOUR_IN_SECONDS);
-    return $data;
-}
-
-function mr_check_for_update($transient) {
-    if (empty($transient->checked)) {
-        return $transient;
-    }
-
-    $plugin_file = plugin_basename(__FILE__);
-    $remote = mr_get_remote_plugin_info();
-    if (!$remote || empty($remote->version)) {
-        return $transient;
-    }
-
-    $local_version = MR_PLUGIN_VERSION;
-    if (version_compare($remote->version, $local_version, '>')) {
-        $update = new stdClass();
-        $update->slug = dirname($plugin_file);
-        $update->plugin = $plugin_file;
-        $update->new_version = $remote->version;
-        $update->package = $remote->package ?? '';
-        $update->url = $remote->url ?? '';
-        $transient->response[ $plugin_file ] = $update;
-    }
-
-    return $transient;
-}
-
-function mr_plugins_api_handler($res, $action, $args) {
-    $plugin_file = plugin_basename(__FILE__);
-    $slug = dirname($plugin_file);
-    if (empty($args->slug) || $args->slug !== $slug) {
-        return $res;
-    }
-
-    $remote = mr_get_remote_plugin_info();
-    if (!$remote) {
-        return $res;
-    }
-
-    $info = new stdClass();
-    $info->name = $remote->name ?? 'Medical Records';
-    $info->slug = $slug;
-    $info->version = $remote->version;
-    $info->author = $remote->author ?? '';
-    $info->homepage = $remote->url ?? '';
-    $info->requires = $remote->requires ?? '';
-    $info->tested = $remote->tested ?? '';
-    $info->download_link = $remote->package ?? '';
-    $info->sections = [
-        'description' => $remote->sections->description ?? ''
-    ];
-
-    return $info;
-}
+mr_init_plugin();
