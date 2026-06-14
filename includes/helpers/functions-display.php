@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Get medical info summary HTML
+ * Get medical info summary HTML with modern UI
  * 
  * @param int $user_id
  * @return string HTML output
@@ -21,7 +21,7 @@ function mr_get_medical_info($user_id) {
     $visits = get_user_meta($user_id, 'medical_visits', true);
     $visits = is_array($visits) ? $visits : [];
     
-    // محاسبه آخرین ویزیت
+    // Calculate last visit date
     $last_visit_date = '—';
     if (!empty($visits)) {
         usort($visits, function($a, $b) {
@@ -34,27 +34,27 @@ function mr_get_medical_info($user_id) {
     $medications = !empty($record['medications']) ? $record['medications'] : '—';
     $notes = !empty($record['notes']) ? $record['notes'] : '—';
     
-    $output = '<div class="mr-medical-summary">';
-    $output .= '<h3 style="color: #396cf0 !important; margin-top: 0 !important; margin-bottom: 20px !important; font-size: 18px !important;">📋 خلاصه پرونده پزشکی</h3>';
+    $output = '<div class="mr-medical-summary mr-animate-in">';
+    $output .= '<h3 style="margin-top: 0 !important; margin-bottom: 20px !important;" class="mr-card-title">' . __('Medical Summary', 'medical-records') . '</h3>';
     $output .= '<div class="mr-medical-summary-grid">';
     
     $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label">آخرین ویزیت</div>';
+    $output .= '<div class="mr-medical-label"><span>📅</span> ' . __('Last Visit', 'medical-records') . '</div>';
     $output .= '<div class="mr-medical-value">' . esc_html($last_visit_date) . '</div>';
     $output .= '</div>';
     
     $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label">سابقه بیماری‌ها</div>';
+    $output .= '<div class="mr-medical-label"><span>🏥</span> ' . __('Chronic Illnesses', 'medical-records') . '</div>';
     $output .= '<div class="mr-medical-value">' . esc_html($illnesses) . '</div>';
     $output .= '</div>';
     
     $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label">داروهای مصرفی</div>';
+    $output .= '<div class="mr-medical-label"><span>💊</span> ' . __('Current Medications', 'medical-records') . '</div>';
     $output .= '<div class="mr-medical-value">' . esc_html($medications) . '</div>';
     $output .= '</div>';
     
     $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label">یادداشت پزشک</div>';
+    $output .= '<div class="mr-medical-label"><span>📝</span> ' . __('Doctor Notes', 'medical-records') . '</div>';
     $output .= '<div class="mr-medical-value">' . esc_html($notes) . '</div>';
     $output .= '</div>';
     
