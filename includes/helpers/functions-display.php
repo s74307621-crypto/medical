@@ -5,15 +5,14 @@
  * @package Medical_Records
  */
 
-// Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
 
 /**
- * Get medical info summary HTML with modern UI
+ * Get medical info summary card for a user
  * 
- * @param int $user_id
+ * @param int $user_id User ID
  * @return string HTML output
  */
 function mr_get_medical_info($user_id) {
@@ -21,8 +20,12 @@ function mr_get_medical_info($user_id) {
     $visits = get_user_meta($user_id, 'medical_visits', true);
     $visits = is_array($visits) ? $visits : [];
     
-    // Calculate last visit date
+    // Calculate statistics
+    $total_visits = count($visits);
     $last_visit_date = '—';
+    $blood_group = isset($record['blood_group']) && !empty($record['blood_group']) ? $record['blood_group'] : '—';
+    $allergies = isset($record['allergies']) && !empty($record['allergies']) ? $record['allergies'] : '—';
+    
     if (!empty($visits)) {
         usort($visits, function($a, $b) {
             return strcmp($b['visit_date'] ?? '', $a['visit_date'] ?? '');
@@ -30,35 +33,41 @@ function mr_get_medical_info($user_id) {
         $last_visit_date = $visits[0]['visit_date'] ?? '—';
     }
     
-    $illnesses = !empty($record['illnesses']) ? $record['illnesses'] : '—';
-    $medications = !empty($record['medications']) ? $record['medications'] : '—';
-    $notes = !empty($record['notes']) ? $record['notes'] : '—';
-    
-    $output = '<div class="mr-medical-summary mr-animate-in">';
-    $output .= '<h3 style="margin-top: 0 !important; margin-bottom: 20px !important;" class="mr-card-title">' . __('Medical Summary', 'medical-records') . '</h3>';
-    $output .= '<div class="mr-medical-summary-grid">';
-    
-    $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label"><span>📅</span> ' . __('Last Visit', 'medical-records') . '</div>';
-    $output .= '<div class="mr-medical-value">' . esc_html($last_visit_date) . '</div>';
-    $output .= '</div>';
-    
-    $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label"><span>🏥</span> ' . __('Chronic Illnesses', 'medical-records') . '</div>';
-    $output .= '<div class="mr-medical-value">' . esc_html($illnesses) . '</div>';
-    $output .= '</div>';
-    
-    $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label"><span>💊</span> ' . __('Current Medications', 'medical-records') . '</div>';
-    $output .= '<div class="mr-medical-value">' . esc_html($medications) . '</div>';
-    $output .= '</div>';
-    
-    $output .= '<div class="mr-medical-item">';
-    $output .= '<div class="mr-medical-label"><span>📝</span> ' . __('Doctor Notes', 'medical-records') . '</div>';
-    $output .= '<div class="mr-medical-value">' . esc_html($notes) . '</div>';
-    $output .= '</div>';
-    
-    $output .= '</div></div>';
-    
-    return $output;
+    ob_start();
+    ?>
+    <div class="mr-medical-summary mr-card">
+        <h3 class="mr-summary-title"><?php echo __('Medical Summary', 'medilink'); ?></h3>
+        <div class="mr-summary-grid">
+            <div class="mr-summary-item">
+                <span class="mr-summary-icon">📋</span>
+                <div class="mr-summary-content">
+                    <span class="mr-summary-label"><?php echo __('Blood Group', 'medilink'); ?></span>
+                    <span class="mr-summary-value"><?php echo esc_html($blood_group); ?></span>
+                </div>
+            </div>
+            <div class="mr-summary-item">
+                <span class="mr-summary-icon">⚠️</span>
+                <div class="mr-summary-content">
+                    <span class="mr-summary-label"><?php echo __('Allergies', 'medilink'); ?></span>
+                    <span class="mr-summary-value"><?php echo esc_html($allergies); ?></span>
+                </div>
+            </div>
+            <div class="mr-summary-item">
+                <span class="mr-summary-icon">📅</span>
+                <div class="mr-summary-content">
+                    <span class="mr-summary-label"><?php echo __('Last Visit', 'medilink'); ?></span>
+                    <span class="mr-summary-value"><?php echo esc_html($last_visit_date); ?></span>
+                </div>
+            </div>
+            <div class="mr-summary-item">
+                <span class="mr-summary-icon">🏥</span>
+                <div class="mr-summary-content">
+                    <span class="mr-summary-label"><?php echo __('Total Visits', 'medilink'); ?></span>
+                    <span class="mr-summary-value"><?php echo esc_html($total_visits); ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
 }
