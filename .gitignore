@@ -1,68 +1,36 @@
-```gitignore
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-
+```
 # Dependencies
-vendor/
 node_modules/
+vendor/
 
-# Logs and temp files
+# Build artifacts
+dist/
+build/
+*.min.css
+*.min.js
+*.map
+
+# Logs
 *.log
-*.tmp
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Editors
+# Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*.tmp
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
 
-# Backup files
-*~
-*.bak
-*.backup
-
-# Cache directories
-.cache/
-*.cache
-
-# Distribution / Build artifacts
-dist/
-build/
-target/
-*.so
-*.dll
-*.dylib
-*.exe
-
-# Compression archives
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# WordPress specific
+wp-content/cache/
+*.sql
+wp-config-local.php
 ```
