@@ -28,6 +28,7 @@ require_once(ABSPATH . 'wp-admin/includes/media.php');
 
 // ========== بارگذاری CSS و JavaScript ==========
 add_action('wp_enqueue_scripts', 'mr_enqueue_assets');
+add_action('admin_enqueue_scripts', 'mr_enqueue_admin_assets');
 
 function mr_enqueue_assets() {
     // Core styles
@@ -49,7 +50,16 @@ function mr_enqueue_assets() {
         'ajax_url' => admin_url('admin-ajax.php'),
         'booking_nonce' => wp_create_nonce('mr_booking_nonce'),
         'mr_plugin_url' => MR_PLUGIN_URL,
-    ]);\
+    ]);
+}
+
+function mr_enqueue_admin_assets($hook) {
+    // Only load on our plugin pages
+    if (strpos($hook, 'medical-records') === false && strpos($hook, 'mr-') === false) {
+        return;
+    }
+    
+    wp_enqueue_style('mr-admin-css', MR_PLUGIN_URL . 'assets/css/admin.css', [], MR_PLUGIN_VERSION);
 }
 
 // Activation hook

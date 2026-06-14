@@ -4,7 +4,8 @@ add_action('admin_menu', 'mr_add_admin_menu');
 add_action('admin_menu', 'mr_add_record_detail_page');
 add_action('admin_menu', 'mr_add_edit_record_page');
 add_action('admin_menu', 'mr_add_visit_page');
-add_action('admin_menu', 'mr_add_doctor_schedules_page');
+// حذف منوی تنظیمات نوبت دکترها - سیستم رزرو حذف شد
+// add_action('admin_menu', 'mr_add_doctor_schedules_page');
 
 function mr_add_admin_menu() {
     add_menu_page(
@@ -51,13 +52,4 @@ function mr_add_visit_page() {
     );
 }
 
-function mr_add_doctor_schedules_page() {
-    add_submenu_page(
-        'medical-records',
-        'تنظیمات نوبت دکترها',
-        'نوبت دکترها',
-        'manage_options',
-        'mr-doctor-schedules',
-        'mr_doctor_schedules_page'
-    );
-}
+// تابع mr_add_doctor_schedules_page حذف شد - سیستم رزرو غیرفعال است
