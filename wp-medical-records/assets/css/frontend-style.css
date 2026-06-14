@@ -1,0 +1,350 @@
+/* Frontend Styles */
+.wmr-patient-panel,
+.wmr-doctor-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wmr-error-message,
+.wmr-info-message {
+    padding: 15px;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.wmr-error-message {
+    background: #f6efee;
+    border-left: 4px solid #d63638;
+    color: #d63638;
+}
+
+.wmr-info-message {
+    background: #f0f6fc;
+    border-left: 4px solid #2271b1;
+    color: #2271b1;
+}
+
+.wmr-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    margin: 20px 0;
+}
+
+.wmr-table th,
+.wmr-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.wmr-table th {
+    background: #f9f9f9;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.wmr-table tbody tr:hover {
+    background: #f0f6fc;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Patient Info Card */
+.wmr-patient-info-card {
+    background: #f0f6fc;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #c3d9ed;
+}
+
+.wmr-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.wmr-info-item {
+    padding: 10px;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #e2e4e7;
+}
+
+.wmr-info-item strong {
+    display: block;
+    color: #646970;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.wmr-info-item span {
+    color: #23282d;
+    font-size: 14px;
+}
+
+/* Medical History Section */
+.wmr-medical-history-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 8px;
+}
+
+/* Visits Section */
+.wmr-visits-section {
+    margin: 30px 0;
+}
+
+/* Modal Styles */
+.wmr-modal {
+    position: fixed;
+    z-index: 999999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.wmr-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.wmr-modal-large .wmr-modal-content {
+    max-width: 900px;
+}
+
+.wmr-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.wmr-close:hover,
+.wmr-close:focus {
+    color: #000;
+    text-decoration: none;
+}
+
+/* Form Styles */
+.wmr-form-group {
+    margin-bottom: 20px;
+}
+
+.wmr-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.wmr-form-group input[type="text"],
+.wmr-form-group input[type="number"],
+.wmr-form-group select,
+.wmr-form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.wmr-form-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Visit Details */
+.wmr-visit-info-card {
+    background: #f0f6fc;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.wmr-visit-details {
+    margin: 20px 0;
+}
+
+.wmr-visit-details h4 {
+    color: #23282d;
+    margin: 15px 0 10px;
+    border-bottom: 2px solid #2271b1;
+    padding-bottom: 5px;
+}
+
+.wmr-medicines-section,
+.wmr-files-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.wmr-files-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.wmr-file-item {
+    padding: 10px 15px;
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.wmr-file-item:hover {
+    background: #f0f6fc;
+    border-color: #2271b1;
+}
+
+.wmr-file-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.wmr-file-link:hover {
+    color: #135e96;
+}
+
+/* Lightbox */
+.wmr-lightbox {
+    position: fixed;
+    z-index: 1000000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.wmr-lightbox-content {
+    position: relative;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 800px;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.wmr-lightbox-close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color: #333;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.wmr-lightbox-close:hover {
+    color: #000;
+}
+
+/* Toast Notifications */
+.wmr-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px 25px;
+    background: #32373c;
+    color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    z-index: 1000001;
+    animation: wmr-slide-in 0.3s ease-out;
+}
+
+.wmr-toast.success {
+    background: #00a32a;
+}
+
+.wmr-toast.error {
+    background: #d63638;
+}
+
+@keyframes wmr-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Repeating Fields */
+.wmr-repeating-field {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid #e2e4e7;
+}
+
+.wmr-repeating-field-remove {
+    color: #d63638;
+    cursor: pointer;
+    float: right;
+}
+
+.wmr-add-field-btn {
+    margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wmr-patient-panel,
+    .wmr-doctor-panel {
+        padding: 10px;
+    }
+    
+    .wmr-modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .wmr-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wmr-form-actions {
+        flex-direction: column;
+    }
+    
+    .wmr-form-actions button {
+        width: 100%;
+    }
+}
