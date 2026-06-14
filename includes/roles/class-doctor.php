@@ -1,30 +1,44 @@
 <?php
- add_shortcode('medical_doctor_dashboard', 'mr_doctor_dashboard_shortcode');
-    function mr_doctor_dashboard_shortcode() {
-        if (!is_user_logged_in()) {
-            return '<div class="mr-notice" style="padding: 15px !important; background: #fff8e6 !important; border: 1px solid #ffebcc !important; border-radius: 8px !important; margin: 20px 0 !important; color: #996800 !important;">لطفاً وارد شوید.</div>';
-        }
-        $user = wp_get_current_user();
-        if (!in_array('editor', (array) $user->roles) && !in_array('administrator', (array) $user->roles)) {
-            return '<div class="mr-notice" style="padding: 15px !important; background: #fff8e6 !important; border: 1px solid #ffebcc !important; border-radius: 8px !important; margin: 20px 0 !important; color: #996800 !important;">این بخش فقط برای پزشکان است.</div>';
-        }
-        if (isset($_GET['action']) && $_GET['action'] === 'booking_settings') {
-            return mr_doctor_booking_settings();
-        }
-        if (isset($_GET['action']) && $_GET['action'] === 'view_patient') {
-            return mr_doctor_view_patient_page(intval($_GET['user_id']));
-        }
-        if (isset($_POST['mr_save_visit_frontend'])) {
-            return mr_doctor_handle_visit_submission();
-        }
-        if (isset($_GET['action']) && $_GET['action'] === 'add_visit') {
-            return mr_doctor_add_visit_form(intval($_GET['user_id']));
-        }
-        if (isset($_GET['action']) && $_GET['action'] === 'create_record') {
-            return mr_doctor_create_record(intval($_GET['user_id']));
-        }
-        return mr_doctor_patients_list();
+/**
+ * Medical Records Plugin - Doctor Dashboard
+ * Uses Bookly staff as doctors
+ * 
+ * @package Medical_Records
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+add_shortcode('medical_doctor_dashboard', 'mr_doctor_dashboard_shortcode');
+function mr_doctor_dashboard_shortcode() {
+    if (!is_user_logged_in()) {
+        return '<div class="mr-notice" style="padding: 15px !important; background: #fff8e6 !important; border: 1px solid #ffebcc !important; border-radius: 8px !important; margin: 20px 0 !important; color: #996800 !important;">لطفاً وارد شوید.</div>';
     }
+    
+    // Check if current user is a Bookly doctor
+    $current_user = wp_get_current_user();
+    $bookly_doctor = mr_get_doctor_by_wp_user_id($current_user->ID);
+    
+    if (!$bookly_doctor && !in_array('administrator', (array) $current_user->roles)) {
+        return '<div class="mr-notice" style="padding: 15px !important; background: #fff8e6 !important; border: 1px solid #ffebcc !important; border-radius: 8px !important; margin: 20px 0 !important; color: #996800 !important;">این بخش فقط برای پزشکان است.</div>';
+    }
+    
+    if (isset($_GET['action']) && $_GET['action'] === 'view_patient') {
+        return mr_doctor_view_patient_page(intval($_GET['user_id']));
+    }
+    if (isset($_POST['mr_save_visit_frontend'])) {
+        return mr_doctor_handle_visit_submission();
+    }
+    if (isset($_GET['action']) && $_GET['action'] === 'add_visit') {
+        return mr_doctor_add_visit_form(intval($_GET['user_id']));
+    }
+    if (isset($_GET['action']) && $_GET['action'] === 'create_record') {
+        return mr_doctor_create_record(intval($_GET['user_id']));
+    }
+    return mr_doctor_patients_list();
+}
 
 
 	 // ========== لیست بیماران برای پزشک ==========

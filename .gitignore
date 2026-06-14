@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since the changes only include PHP source files (.php) which are core project files and should not be ignored.
+Nothing should be ignored based on the provided file changes. The modified file 'includes/roles/class-doctor.php' is a source code file and should not be added to .gitignore. Since there are no build artifacts, dependencies, temporary files, or other ignorable items in the changes, the .gitignore remains empty.
