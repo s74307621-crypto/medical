@@ -1,1 +1,70 @@
-Nothing should be ignored based on the provided file changes. The modified file 'includes/roles/class-doctor.php' is a source code file and should not be added to .gitignore. Since there are no build artifacts, dependencies, temporary files, or other ignorable items in the changes, the .gitignore remains empty.
+```php
+# Compiled and build artifacts
+*.pyc
+*.class
+*.o
+*.obj
+*.out
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.gradle/
+julia-*/
+zig*/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```

@@ -1,81 +1,138 @@
 <?php
+/**
+ * Admin role functions for Medical Records plugin
+ * Uses Bookly tables for doctors and patients
+ * 
+ * @package Medical_Records
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Main admin page - List of patients from Bookly
+ */
 function mr_admin_page() {
-        echo '<div class="wrap" style="margin: 20px !important;">';
-        echo '<h1 style="color: #396cf0 !important; margin-bottom: 25px !important;">پرونده‌های پزشکی</h1>';
-
-        $search_query = isset($_GET['mr_search']) ? sanitize_text_field($_GET['mr_search']) : '';
-        $order_dir = (isset($_GET['mr_dir']) && $_GET['mr_dir'] === 'desc') ? 'DESC' : 'ASC';
-
-        $base_url = remove_query_arg(['mr_dir']);
-        $sort_id_url = add_query_arg(['mr_dir' => ($order_dir === 'ASC' ? 'desc' : 'asc')], $base_url);
-
-        $args = [
-            'role'        => 'subscriber',
-            'orderby'     => 'ID',
-            'order'       => $order_dir,
-            'number'      => -1,
-        ];
-
+    global $wpdb;
+    
+    echo '<div class="wrap mr-container">';
+    echo '<h1 class="mr-card-title" style="margin-bottom: 30px !important;">' . __('Medical Records Management', 'medical-records') . '</h1>';
+    
+    // Search and filters
+    $search_query = isset($_GET['mr_search']) ? sanitize_text_field($_GET['mr_search']) : '';
+    $order_dir = (isset($_GET['mr_dir']) && $_GET['mr_dir'] === 'desc') ? 'DESC' : 'ASC';
+    
+    $base_url = remove_query_arg(['mr_dir']);
+    $sort_id_url = add_query_arg(['mr_dir' => ($order_dir === 'ASC' ? 'desc' : 'asc')], $base_url);
+    
+    // Get patients from Bookly customers table
+    $patients_table = $wpdb->prefix . 'bookly_customers';
+    $patients = [];
+    
+    if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $patients_table)) === $patients_table) {
+        $sql = "SELECT * FROM {$patients_table}";
+        $params = [];
+        
         if (!empty($search_query)) {
-            $args['search'] = '*' . $search_query . '*';
-            $args['search_columns'] = ['user_login', 'user_email', 'display_name'];
+            $sql .= " WHERE full_name LIKE %s OR email LIKE %s OR phone LIKE %s";
+            $search_param = '%' . $wpdb->esc_like($search_query) . '%';
+            $params = [$search_param, $search_param, $search_param];
         }
-
-        $users = get_users($args);
-
-        echo '<form method="get" style="margin-bottom:20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">';
-        echo '<input type="hidden" name="page" value="medical-records" />';
-        echo '<input type="text" name="mr_search" value="' . esc_attr($search_query) . '" 
-            placeholder="جستجو بر اساس نام، ایمیل یا نام کاربری..." style="width: 300px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" />';
-        echo '<input type="submit" value="جستجو" class="button" style="background: #396cf0 !important; color: white !important; border: none !important; padding: 8px 16px !important; border-radius: 6px !important; font-weight: bold !important;" />';
-        echo ' <a href="' . admin_url('admin.php?page=medical-records') . '" class="button" style="background: #f0f0f0 !important; color: #333 !important; border: 1px solid #ddd !important; padding: 8px 16px !important; border-radius: 6px !important;">پاک کردن</a>';
-        echo '</form>';
-
-        $sort_indicator = ($order_dir === 'ASC') ? ' ↑' : ' ↓';
-        echo '<p style="margin-bottom: 15px;"><strong>مرتب‌سازی بر اساس ID: </strong>';
-        echo '<a href="' . esc_url($sort_id_url) . '" class="button" style="background: #eef4ff !important; color: #396cf0 !important; border: 1px solid #c2d8ff !important; padding: 6px 12px !important; border-radius: 6px !important; text-decoration: none !important;">ID کاربر' . $sort_indicator . '</a></p>';
-
-        echo '<table class="wp-list-table widefat fixed striped" style="width: 100% !important; border-collapse: collapse !important; margin-top: 10px !important; background: white !important; border-radius: 10px !important; overflow: hidden !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;">';
-        echo '<thead><tr style="background: #f8fafc !important;">';
-        echo '<th style="padding: 14px !important; text-align: right !important; border-bottom: 1px solid #eee !important;">ID کاربر</th>';
-        echo '<th style="padding: 14px !important; text-align: right !important; border-bottom: 1px solid #eee !important;">نام کاربری</th>';
-        echo '<th style="padding: 14px !important; text-align: right !important; border-bottom: 1px solid #eee !important;">نام کامل</th>';
-        echo '<th style="padding: 14px !important; text-align: right !important; border-bottom: 1px solid #eee !important;">ایمیل</th>';
-        echo '<th style="padding: 14px !important; text-align: right !important; border-bottom: 1px solid #eee !important;">پرونده</th>';
-        echo '</tr></thead>';
-        echo '<tbody>';
-
-        if (empty($users)) {
-            echo '<tr><td colspan="5" style="padding: 20px !important; text-align: center !important; color: #888 !important;">کاربری یافت نشد.</td></tr>';
+        
+        $sql .= " ORDER BY id " . ($order_dir === 'ASC' ? 'ASC' : 'DESC');
+        
+        if (!empty($params)) {
+            $patients = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
         } else {
-            foreach ($users as $user) {
-                $record_data = get_user_meta($user->ID, 'medical_record_data', true);
-                $has_record = !empty($record_data) && is_array($record_data);
-
-                echo '<tr style="border-bottom: 1px solid #f0f0f0 !important;">';
-                echo '<td style="padding: 14px !important; text-align: right !important;">' . esc_html($user->ID) . '</td>';
-                echo '<td style="padding: 14px !important; text-align: right !important;">' . esc_html($user->user_login) . '</td>';
-                echo '<td style="padding: 14px !important; text-align: right !important;">' . esc_html($user->display_name) . '</td>';
-                echo '<td style="padding: 14px !important; text-align: right !important;">' . esc_html($user->user_email) . '</td>';
-                echo '<td style="padding: 14px !important; text-align: right !important;">';
-
-                if ($has_record) {
-                    echo '<a href="' . admin_url('admin.php?page=mr-view-record&user_id=' . $user->ID) . '" class="button" style="background: #396cf0 !important; color: white !important; border: none !important; padding: 6px 12px !important; border-radius: 6px !important; margin-left: 5px; margin-bottom: 5px; text-decoration: none !important; display: inline-block !important;">نمایش</a> ';
-                    echo '<a href="' . admin_url('admin.php?page=mr-edit-record&user_id=' . $user->ID) . '" class="button" style="background: #4caf50 !important; color: white !important; border: none !important; padding: 6px 12px !important; border-radius: 6px !important; margin-left: 5px; margin-bottom: 5px; text-decoration: none !important; display: inline-block !important;">ویرایش</a> ';
-                    echo '<a href="' . admin_url('admin-post.php?action=mr_delete_record&user_id=' . $user->ID) . '" class="button button-link-delete" 
-                        onclick="return confirm(\'آیا از حذف پرونده این کاربر مطمئنید؟\');" style="color: #e74c3c !important; text-decoration: underline !important; margin-left: 5px;">حذف</a>';
-                } else {
-                    echo '<a href="' . admin_url('admin-post.php?action=mr_create_record&user_id=' . $user->ID) . '" class="button button-primary" style="background: #396cf0 !important; color: white !important; border: none !important; padding: 6px 12px !important; border-radius: 6px !important; text-decoration: none !important; display: inline-block !important;">ایجاد پرونده</a>';
-                }
-
-                echo '</td>';
-                echo '</tr>';
-            }
+            $patients = $wpdb->get_results($sql, ARRAY_A);
         }
-
-        echo '</tbody></table>';
-        echo '</div>';
     }
+    
+    // Search form with modern UI
+    echo '<div class="mr-card">';
+    echo '<form method="get" class="mr-search-form">';
+    echo '<input type="hidden" name="page" value="medical-records" />';
+    echo '<input type="text" name="mr_search" value="' . esc_attr($search_query) . '" 
+        placeholder="' . __('Search by name, email or phone...', 'medical-records') . '" class="mr-search-input" />';
+    echo '<button type="submit" class="mr-btn mr-btn-primary">' . __('Search', 'medical-records') . '</button>';
+    echo '<a href="' . admin_url('admin.php?page=medical-records') . '" class="mr-btn mr-btn-secondary">' . __('Clear', 'medical-records') . '</a>';
+    echo '</form>';
+    
+    // Sort indicator
+    $sort_indicator = ($order_dir === 'ASC') ? ' ↑' : ' ↓';
+    echo '<div style="margin-top: 15px;">';
+    echo '<span style="color: var(--mr-muted); font-weight: 600;">' . __('Sort by ID:', 'medical-records') . ' </span>';
+    echo '<a href="' . esc_url($sort_id_url) . '" class="mr-filter-badge">' . __('Patient ID', 'medical-records') . $sort_indicator . '</a>';
+    echo '</div>';
+    echo '</div>';
+    
+    // Patients table with modern UI
+    echo '<div class="mr-card">';
+    echo '<div class="mr-table-wrapper">';
+    echo '<table class="mr-table">';
+    echo '<thead>';
+    echo '<tr>';
+    echo '<th>' . __('ID', 'medical-records') . '</th>';
+    echo '<th>' . __('Full Name', 'medical-records') . '</th>';
+    echo '<th>' . __('Email', 'medical-records') . '</th>';
+    echo '<th>' . __('Phone', 'medical-records') . '</th>';
+    echo '<th>' . __('Actions', 'medical-records') . '</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+    
+    if (empty($patients)) {
+        echo '<tr>';
+        echo '<td colspan="5" style="text-align: center; padding: 40px;">';
+        echo '<div class="mr-empty-state">';
+        echo '<div class="mr-empty-state-icon">📋</div>';
+        echo '<div class="mr-empty-state-text">' . __('No patients found.', 'medical-records') . '</div>';
+        echo '</div>';
+        echo '</td>';
+        echo '</tr>';
+    } else {
+        foreach ($patients as $patient) {
+            $wp_user_id = $patient['wp_user_id'] ?? 0;
+            $has_record = false;
+            
+            if ($wp_user_id) {
+                $record_data = get_user_meta($wp_user_id, 'medical_record_data', true);
+                $has_record = !empty($record_data) && is_array($record_data);
+            }
+            
+            echo '<tr class="mr-animate-in">';
+            echo '<td><strong>#' . esc_html($patient['id']) . '</strong></td>';
+            echo '<td>' . esc_html(mr_format_patient_name($patient)) . '</td>';
+            echo '<td>' . (empty($patient['email']) ? '<span style="color: var(--mr-muted);">—</span>' : esc_html($patient['email'])) . '</td>';
+            echo '<td>' . (empty($patient['phone']) ? '<span style="color: var(--mr-muted);">—</span>' : esc_html($patient['phone'])) . '</td>';
+            echo '<td>';
+            
+            if ($has_record && $wp_user_id) {
+                echo '<a href="' . admin_url('admin.php?page=mr-view-record&user_id=' . $wp_user_id) . '" class="mr-btn mr-btn-primary mr-btn-sm">' . __('View Record', 'medical-records') . '</a> ';
+                echo '<a href="' . admin_url('admin.php?page=mr-edit-record&user_id=' . $wp_user_id) . '" class="mr-btn mr-btn-success mr-btn-sm">' . __('Edit', 'medical-records') . '</a> ';
+                echo '<a href="' . admin_url('admin-post.php?action=mr_delete_record&user_id=' . $wp_user_id) . '" class="mr-btn mr-btn-danger mr-btn-sm" 
+                    onclick="return confirm(\'' . __('Are you sure you want to delete this patient\'s record?', 'medical-records') . '\');">' . __('Delete', 'medical-records') . '</a>';
+            } else {
+                if ($wp_user_id) {
+                    echo '<a href="' . admin_url('admin-post.php?action=mr_create_record&user_id=' . $wp_user_id) . '" class="mr-btn mr-btn-primary mr-btn-sm">' . __('Create Record', 'medical-records') . '</a>';
+                } else {
+                    echo '<span style="color: var(--mr-warning); font-weight: 600;">' . __('No WordPress User Linked', 'medical-records') . '</span>';
+                }
+            }
+            
+            echo '</td>';
+            echo '</tr>';
+        }
+    }
+    
+    echo '</tbody>';
+    echo '</table>';
+    echo '</div>';
+    echo '</div>';
+    echo '</div>';
+}
 
 // ========== نمایش جزئیات (ادمین) ==========
     function mr_view_record_page() {
@@ -437,3 +494,19 @@ if (!empty($visit['rating'])) {
         wp_redirect(admin_url('admin.php?page=medical-records'));
         exit;
     }
+// ========== Delete Record Handler ==========
+add_action('admin_post_mr_delete_record', 'mr_handle_delete_record');
+function mr_handle_delete_record() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('You are not allowed.', 'medical-records'));
+    }
+
+    $user_id = intval($_GET['user_id']);
+    if ($user_id > 0) {
+        delete_user_meta($user_id, 'medical_record_data');
+        delete_user_meta($user_id, 'medical_visits');
+    }
+
+    wp_redirect(admin_url('admin.php?page=medical-records'));
+    exit;
+}
